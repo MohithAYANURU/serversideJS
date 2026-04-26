@@ -37,14 +37,14 @@ export const getStudentById = async (req, res) => {
 export const createStudent = async (req, res) => {
   try {
     // GDPR Tip: Destructure to ensure you only take what's allowed
-    const { name, email, password } = req.body;
+    const { name, email, password, major, gpa } = req.body;
     
     // Service handles hashing (bcrypt) before saving to MongoDB
-    const newStudent = await createStudentService({ name, email, password });
+    const newStudent = await createStudentService({ name, email, password, major, gpa });
     
     res.status(201).json({ 
-      message: "Student created successfully", 
-      studentId: newStudent._id 
+      message: "Student created successfully",
+      newStudent
     });
   } catch (error) {
     res.status(500).json({ message: "Error creating student: " + error.message });

@@ -1,32 +1,39 @@
+import "dotenv/config"; 
 import express from "express";
 import cors from "cors";
-
-// TODO 1: Import connectToMongoDB from ./config/db.js
 import { connectToMongoDB } from "./config/db.js";
-
-// TODO 2: Import studentRouter from ./routes/studentsRoute.js
 import studentRouter from "./routes/studentsRoute.js";
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; 
 
-// TODO 3: Call connectToMongoDB() here to establish the DB connection
-connectToMongoDB();
-// Middleware — already set up for you
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(express.static('public'))
+app.use(express.static('public'));
 
-// TODO 4: Mount studentRouter at "/api/students"
-// Hint: app.use("/api/students", studentRouter)
 
 app.use("/api/students", studentRouter);
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Server is running ...");
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+// Connect to MongoDB and start server
+const startServer = async () => {
+  try {
+    await connectToMongoDB();
+    
+    app.listen(port, () => {
+      console.log(` Connected to MongoDB`);
+      console.log(` Server listening on port ${port}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err.message);
+    process.exit(1);
+  }
+};
+
+startServer();

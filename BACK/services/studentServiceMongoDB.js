@@ -1,22 +1,36 @@
+import User from "../models/userModel.js";
 import students from "../data/students.js";
+import bcrypt from "bcrypt";
+
 const getAllStudentsService = () => {
-  return students;
+  return User.find();
 };
 
 const getStudentByIdService = (id) => {
-  return students.find((student) => student.id === Number(id));
+  return User.findById(id);
 };
 
-const createStudentService = (studentData) => {
-  const newStudent = {
-    id: students.length + 1,
-    ...studentData,
-  };
+// const hashPassword = async (password) => {
+//   const salt = await bcrypt.genSalt(10);
+//   return await bcrypt.hash(password, salt);
+// };
+const createStudentService = async (studentData) => {
+  console.log("Creating student with data:", studentData); 
+  try {
+    const hashedPassword = await bcrypt.hash(studentData.password, 10);
+    console.log("Hashed password:", hashedPassword);
+    studentData.password = hashedPassword;
+    const newStudent = new User(studentData);
 
-  students.push(newStudent);
-  return newStudent;
+    await newStudent.save();
+  } catch (error) {
+    throw new Error("Error creating student: " + error.message);  
+    
+  }
+
+  
+
 };
-
 const updateStudentService = (id, studentData) => {
   const student = students.find((student) => student.id === Number(id));
 
@@ -43,10 +57,13 @@ const deleteStudentService = (id) => {
   return deletedStudents[0];
 };
 
+
+
+
 export {
   getAllStudentsService,
   getStudentByIdService,
   createStudentService,
   updateStudentService,
-  deleteStudentService,
+  deleteStudentService
 };

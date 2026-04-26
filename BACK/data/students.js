@@ -1,5 +1,6 @@
-export const students = [
-  {
+
+export const studentsData = [
+ {
     id: 1,
     name: "Alice Martin",
     email: "alice.martin@epita.fr",
@@ -21,3 +22,5 @@ export const students = [
     gpa: 3.9,
   },
 ];
+
+export default studentsData;
