@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { connectToMongoDB } from "./config/db.js";
 import studentRouter from "./routes/studentsRoute.js";
+import courseRouter from "./routes/courseRoute.js";
 
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(express.static('public'));
 
 
 app.use("/api/students", studentRouter);
+app.use("/api/courses", courseRouter);
 
 // Health check
 app.get("/", (req, res) => {
