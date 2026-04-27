@@ -1,2 +1,4 @@
 BACK/.env
-node_modules/
+BACK/node_modules
+BACK/public/uploads/*
+!BACK/public/uploads/.gitkeep 
