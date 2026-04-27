@@ -1,5 +1,4 @@
 import User from "../models/userModel.js";
-import students from "../data/students.js";
 import bcrypt from "bcrypt";
 
 const getAllStudentsService = () => {
@@ -23,6 +22,7 @@ const createStudentService = async (studentData) => {
     const newStudent = new User(studentData);
 
     await newStudent.save();
+    return newStudent;
   } catch (error) {
     throw new Error("Error creating student: " + error.message);  
     
@@ -32,29 +32,26 @@ const createStudentService = async (studentData) => {
 
 };
 const updateStudentService = (id, studentData) => {
-  const student = students.find((student) => student.id === Number(id));
+  const updatedStudentData = { ...studentData };
 
-  if (!student) {
-    return null;
+  if (updatedStudentData.password) {
+    return bcrypt.hash(updatedStudentData.password, 10).then((hashedPassword) => {
+      updatedStudentData.password = hashedPassword;
+      return User.findByIdAndUpdate(id, updatedStudentData, {
+        new: true,
+        runValidators: true,
+      });
+    });
   }
 
-  student.name = studentData.name;
-  student.email = studentData.email;
-  student.major = studentData.major;
-  student.gpa = studentData.gpa;
-
-  return student;
+  return User.findByIdAndUpdate(id, studentData, {
+    new: true,
+    runValidators: true,
+  });
 };
 
 const deleteStudentService = (id) => {
-  const index = students.findIndex((student) => student.id === Number(id));
-
-  if (index === -1) {
-    return null;
-  }
-
-  const deletedStudents = students.splice(index, 1);
-  return deletedStudents[0];
+  return User.findByIdAndDelete(id);
 };
 
 

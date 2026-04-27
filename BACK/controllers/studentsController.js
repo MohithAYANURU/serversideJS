@@ -1,21 +1,29 @@
 // TODO 1: Import the functions you need from ../services/studentServiceMongoDB.js
-import { 
+import {
   getAllStudentsService,
   getStudentByIdService,
   createStudentService,
   updateStudentService,
   deleteStudentService
 } from "../services/studentServiceMongoDB.js";
+import jwt from "jsonwebtoken";
 
-// TODO 2: Implement each controller below
+const toStudentDTO = (student) => ({
+  id: student._id,
+  name: student.name,
+  email: student.email,
+  gpa: student.gpa,
+  major: student.major,
+  createdAt: student.createdAt,
+  updatedAt: student.updatedAt,
+});
 
 export const getAllStudents = async (req, res) => {
   try {
-    // We MUST await the service because database calls are asynchronous
     const students = await getAllStudentsService();
-    res.status(200).json(students);
+    const studentsDTO = students.map(toStudentDTO);
+    res.status(200).json(studentsDTO);
   } catch (error) {
-    // GDPR/Security: Don't leak system details, just a clean error message
     res.status(404).json({ message: "Could not retrieve students" });
   }
 };
@@ -28,7 +36,7 @@ export const getStudentById = async (req, res) => {
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
-    res.status(200).json(student);
+    res.status(200).json(toStudentDTO(student));
   } catch (error) {
     res.status(404).json({ message: "Invalid Student ID format" });
   }
@@ -36,18 +44,15 @@ export const getStudentById = async (req, res) => {
 
 export const createStudent = async (req, res) => {
   try {
-    // GDPR Tip: Destructure to ensure you only take what's allowed
-    const { name, email, password, major, gpa } = req.body;
-    
-    // Service handles hashing (bcrypt) before saving to MongoDB
-    const newStudent = await createStudentService({ name, email, password, major, gpa });
-    
-    res.status(201).json({ 
-      message: "Student created successfully",
-      newStudent
-    });
+    const { name, email, password, gpa, major } = req.body;
+    const newStudent = { name, email, password, gpa, major };
+    const loggedUser = await createStudentService(newStudent);
+    const token = jwt.sign({ id: loggedUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    }); // signed token with user's id ONLY
+    res.status(201).json({ token, user: toStudentDTO(loggedUser) });
   } catch (error) {
-    res.status(500).json({ message: "Error creating student: " + error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -60,7 +65,7 @@ export const updateStudent = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    res.status(200).json(updatedStudent);
+    res.status(200).json(toStudentDTO(updatedStudent));
   } catch (error) {
     res.status(500).json({ message: "Error updating student data" });
   }
@@ -81,4 +86,8 @@ export const deleteStudent = async (req, res) => {
     res.status(500).json({ message: "Error fulfilling deletion request" });
   }
 };
+
+
+
+
 

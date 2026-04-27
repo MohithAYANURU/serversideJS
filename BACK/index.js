@@ -4,6 +4,7 @@ import cors from "cors";
 import { connectToMongoDB } from "./config/db.js";
 import studentRouter from "./routes/studentsRoute.js";
 
+
 const app = express();
 const port = process.env.PORT || 3000; 
 
