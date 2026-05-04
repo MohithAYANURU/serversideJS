@@ -1,6 +1,7 @@
 import {
   getAllCoursesService,
   getCourseByIdService,
+  findDuplicateCourseService,
   createCourseService,
   updateCourseService,
   deleteCourseService,
@@ -8,7 +9,7 @@ import {
 
 export const getAllCourses = async (req, res) => {
   try {
-    const courses = await getAllCoursesService();
+    const courses = await getAllCoursesService(req.auth.userId);
     res.status(200).json(courses);
   } catch (error) {
     res.status(500).json({ message: "Error retrieving courses" });
@@ -18,7 +19,7 @@ export const getAllCourses = async (req, res) => {
 export const getCourseById = async (req, res) => {
   try {
     const { id } = req.params;
-    const course = await getCourseByIdService(id);
+    const course = await getCourseByIdService(id, req.auth.userId);
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
@@ -33,16 +34,34 @@ export const getCourseById = async (req, res) => {
 export const createCourse = async (req, res) => {
   try {
     const { title, description, credits, instructor, semester } = req.body;
+    const existingCourse = await findDuplicateCourseService(
+      req.auth.userId,
+      title,
+      semester,
+    );
+
+    if (existingCourse) {
+      return res.status(409).json({
+        message: "You already created this course for this semester",
+      });
+    }
+
     const newCourse = await createCourseService({
       title,
       description,
       credits,
       instructor,
       semester,
+      student: req.auth.userId,
     });
 
     res.status(201).json(newCourse);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "You already created this course for this semester",
+      });
+    }
     res.status(500).json({ message: "Error creating course" });
   }
 };
@@ -50,7 +69,7 @@ export const createCourse = async (req, res) => {
 export const updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedCourse = await updateCourseService(id, req.body);
+    const updatedCourse = await updateCourseService(id, req.auth.userId, req.body);
 
     if (!updatedCourse) {
       return res.status(404).json({ message: "Course not found" });
@@ -65,7 +84,7 @@ export const updateCourse = async (req, res) => {
 export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedCourse = await deleteCourseService(id);
+    const deletedCourse = await deleteCourseService(id, req.auth.userId);
 
     if (!deletedCourse) {
       return res.status(404).json({ message: "Course not found" });
